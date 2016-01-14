@@ -1148,7 +1148,7 @@ describe('Select', () => {
 
 			options = [
 				{ value: 'one', label: 'One' },
-				{ value: 'two', label: 'Two' },
+				{ value: 'two', label: 'Two', clearableValue: false },
 				{ value: 'three', label: 'Three' },
 				{ value: 'four', label: 'Four' }
 			];
@@ -1264,6 +1264,29 @@ describe('Select', () => {
 				{ label: 'Four', value: 'four' },
 				{ label: 'Two', value: 'two' }
 			]);
+		});
+
+		it('doesn\'t show the X if clearableValue=false', () => {
+
+			setValueProp(['two']);
+			onChange.reset();  // Ignore previous onChange calls
+
+			var twoDeleteButton = ReactDOM.findDOMNode(instance).querySelectorAll('.Select-value-icon')[0];
+
+			expect(twoDeleteButton, 'to be', undefined);
+		});
+
+		it('doesn\'t allow clearing with backspace if clearableValue=false on the latest element', () => {
+
+			setValueProp(['four', 'two']);
+			onChange.reset();  // Ignore previous onChange calls
+
+			pressBackspace();
+			expect(onChange, 'was not called');
+			var items = ReactDOM.findDOMNode(instance).querySelectorAll('.Select-value-label');
+			expect(items[0], 'to have text', 'Four');
+			expect(items[1], 'to have text', 'Two');
+
 		});
 
 		describe('with late options', () => {
@@ -1713,6 +1736,26 @@ describe('Select', () => {
 
 				expect(ReactDOM.findDOMNode(instance).querySelector(DISPLAYED_SELECTION_SELECTOR), 'to have text', 'Three');
 			});
+
+			describe('toggling disabled=false/disabled=true', () => {
+				// ReactDOM.render is used instead of createControl in order for the React component to update props
+				// See for more info: http://stackoverflow.com/questions/30614454/how-to-test-a-prop-update-on-react-component
+
+				let node, component;
+				beforeEach(() => {
+				    node = document.createElement('div');
+				    instance = ReactDOM.render(<Select searchable={true} value="three" options={defaultOptions} />, node);
+				});
+
+				it('should set the isFocused state to false if disabled=true', function(){
+					
+						expect(instance.state.isFocused, 'to equal', false);
+						findAndFocusInputControl();
+						expect(instance.state.isFocused, 'to equal', true);
+				    ReactDOM.render(<Select disabled={true} searchable={true} value="three" options={defaultOptions} />, node);
+						expect(instance.state.isFocused, 'to equal', false);
+				});
+			})
 		});
 
 		describe('custom filterOption function', () => {
@@ -2119,6 +2162,36 @@ describe('Select', () => {
 
 				TestUtils.Simulate.blur(searchInputNode);
 				expect(onBlur, 'was called once');
+			});
+		});
+
+		describe('with onBlurResetsInput=true', () => {
+			beforeEach(() => {
+				instance = createControl({
+					options: defaultOptions,
+					onBlurResetsInput: true
+				});
+				typeSearchText('test');
+			});
+
+			it('should clear the search input after calling onBlur', () => {
+				TestUtils.Simulate.blur(searchInputNode);
+				expect(ReactDOM.findDOMNode(instance).querySelector('input').value, 'to equal', '');
+			});
+		});
+
+		describe('with onBlurResetsInput=false', () => {
+			beforeEach(() => {
+				instance = createControl({
+					options: defaultOptions,
+					onBlurResetsInput: false
+				});
+				typeSearchText('test');
+			});
+
+			it('shouldn\'t clear the search input after calling onBlur', () => {
+				TestUtils.Simulate.blur(searchInputNode);
+				expect(ReactDOM.findDOMNode(instance).querySelector('input').value, 'to equal', 'test');
 			});
 		});
 

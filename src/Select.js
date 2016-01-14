@@ -29,14 +29,14 @@ const Select = React.createClass({
 		autofocus: React.PropTypes.bool,            // autofocus the component on mount
 		backspaceRemoves: React.PropTypes.bool,     // whether backspace removes an item if there is no text input
 		className: React.PropTypes.string,          // className for the outer element
-		clearAllText:React.PropTypes.oneOfType([
-                    React.PropTypes.string,
-                    React.PropTypes.node
-                ]),                                         // title for the "clear" control when multi: true
+		clearAllText: React.PropTypes.oneOfType([
+			React.PropTypes.string,
+			React.PropTypes.node
+		]),                                         // title for the "clear" control when multi: true
 		clearValueText: React.PropTypes.oneOfType([
-                    React.PropTypes.string,
-                    React.PropTypes.node
-                ]),                                         // title for the "clear" control
+			React.PropTypes.string,
+			React.PropTypes.node
+		]),                                         // title for the "clear" control
 		clearable: React.PropTypes.bool,            // should it be possible to reset value
 		delimiter: React.PropTypes.string,          // delimiter to use to join multiple values for the hidden field value
 		disabled: React.PropTypes.bool,             // whether the Select is disabled or not
@@ -58,10 +58,11 @@ const Select = React.createClass({
 		name: React.PropTypes.string,               // generates a hidden <input /> tag with this field name for html forms
 		newOptionCreator: React.PropTypes.func,     // factory to create new options when allowCreate set
 		noResultsText: React.PropTypes.oneOfType([
-                    React.PropTypes.string,
-                    React.PropTypes.node
-                ]),                                         // placeholder displayed when there are no matching search results
+			React.PropTypes.string,
+			React.PropTypes.node
+		]),                                         // placeholder displayed when there are no matching search results
 		onBlur: React.PropTypes.func,               // onBlur handler: function (event) {}
+		onBlurResetsInput: React.PropTypes.bool,    // whether input is cleared on blur
 		onChange: React.PropTypes.func,             // onChange handler: function (newValue) {}
 		onFocus: React.PropTypes.func,              // onFocus handler: function (event) {}
 		onInputChange: React.PropTypes.func,        // onInputChange handler: function (inputValue) {}
@@ -71,9 +72,9 @@ const Select = React.createClass({
 		optionRenderer: React.PropTypes.func,       // optionRenderer: function (option) {}
 		options: React.PropTypes.array,             // array of options
 		placeholder: React.PropTypes.oneOfType([
-                    React.PropTypes.string,
-                    React.PropTypes.node
-                ]),                                         // field placeholder, displayed when there's no value
+			React.PropTypes.string,
+			React.PropTypes.node
+		]),                                         // field placeholder, displayed when there's no value
 		searchable: React.PropTypes.bool,           // whether to enable searching feature or not
 		simpleValue: React.PropTypes.bool,          // pass the value to onChange as a simple value (legacy pre 1.0 mode), defaults to false
 		style: React.PropTypes.object,              // optional style to apply to the control
@@ -108,6 +109,7 @@ const Select = React.createClass({
 			menuBuffer: 0,
 			multi: false,
 			noResultsText: 'No results found',
+			onBlurResetsInput: true,
 			optionComponent: Option,
 			placeholder: 'Select...',
 			searchable: true,
@@ -147,11 +149,14 @@ const Select = React.createClass({
 				menuDOM.scrollTop = (focusedDOM.offsetTop + focusedDOM.clientHeight - menuDOM.offsetHeight);
 			}
 		}
-		if ( this.props.scrollMenuIntoView && this.refs.menuContainer ) {
+		if (this.props.scrollMenuIntoView && this.refs.menuContainer) {
 			var menuContainerRect = this.refs.menuContainer.getBoundingClientRect();
 			if (window.innerHeight < menuContainerRect.bottom + this.props.menuBuffer) {
 				window.scrollTo(0, window.scrollY + menuContainerRect.bottom + this.props.menuBuffer - window.innerHeight);
 			}
+		}
+		if (prevProps.disabled !== this.props.disabled) {
+			this.setState({ isFocused: false });
 		}
 	},
 
@@ -230,18 +235,22 @@ const Select = React.createClass({
 	},
 
 	handleInputBlur (event) {
-		if (document.activeElement.isEqualNode(this.refs.menu)) {
-			return;
-		}
+ 		if (this.refs.menu && document.activeElement.isEqualNode(this.refs.menu)) {
+ 			return;
+ 		}
+
 		if (this.props.onBlur) {
 			this.props.onBlur(event);
 		}
-		this.setState({
-			inputValue: '',
+		var onBlurredState = {
 			isFocused: false,
 			isOpen: false,
 			isPseudoFocused: false,
-		});
+		};
+		if (this.props.onBlurResetsInput) {
+			onBlurredState.inputValue = '';
+		}
+		this.setState(onBlurredState);
 	},
 
 	handleInputChange (event) {
@@ -370,6 +379,7 @@ const Select = React.createClass({
 	popValue () {
 		var valueArray = this.getValueArray();
 		if (!valueArray.length) return;
+		if (valueArray[valueArray.length-1].clearableValue === false) return;
 		this.setValue(valueArray.slice(0, valueArray.length - 1));
 	},
 
@@ -471,7 +481,7 @@ const Select = React.createClass({
 			return valueArray.map((value, i) => {
 				return (
 					<ValueComponent
-						disabled={this.props.disabled}
+						disabled={this.props.disabled || value.clearableValue === false}
 						key={`value-${i}-${value[this.props.valueKey]}`}
 						onClick={onClick}
 						onRemove={this.removeValue}

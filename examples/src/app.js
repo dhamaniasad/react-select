@@ -10,6 +10,7 @@ import CustomRender from './components/CustomRender';
 import Multiselect from './components/Multiselect';
 import NumericSelect from './components/NumericSelect';
 import States from './components/States';
+import AllowCreate from './components/AllowCreate';
 
 ReactDOM.render(
 	<div>
@@ -18,10 +19,8 @@ ReactDOM.render(
 		<Contributors label="Contributors (Async)" />
 		<NumericSelect label="Numeric Values" />
 		<CustomRender label="Custom Render Methods"/>
-		<CustomComponents label="Custom Placeholder, Option and Value Components" />
-		{/*
-		<SelectedValuesField label="Option Creation (tags mode)" options={FLAVOURS} allowCreate hint="Enter a value that's NOT in the list, then hit return" />
-		*/}
+		<CustomComponents label="Custom Option and Value Components" />
+		<AllowCreate label="Option Creation (tags mode)" allowCreate />
 	</div>,
 	document.getElementById('example')
 );

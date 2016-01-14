@@ -1,7 +1,10 @@
 {
   "name": "react-select",
-  "main": "dist/react-select.min.js",
-  "version": "0.4.7",
+  "main": [
+    "dist/react-select.min.js",
+    "dist/react-select.min.css"
+  ],
+  "version": "1.0.0-beta7",
   "homepage": "https://github.com/JedWatson/react-select",
   "authors": [
     "Jed Watson"
@@ -12,6 +15,10 @@
     "globals",
     "node"
   ],
+  "dependencies": {
+    "classnames": "^2.2.0",
+    "react-input-autosize": "^0.6.5"
+  },
   "keywords": [
     "react",
     "react-component",

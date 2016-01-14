@@ -1,42 +1,73 @@
-var React = require('react');
+import React from 'react';
+import classNames from 'classnames';
 
-var Option = React.createClass({
+const Value = React.createClass({
 
 	displayName: 'Value',
 
 	propTypes: {
-		label: React.PropTypes.string.isRequired
+		disabled: React.PropTypes.bool,               // disabled prop passed to ReactSelect
+		onClick: React.PropTypes.func,                // method to handle click on value label
+		onRemove: React.PropTypes.func,               // method to handle removal of the value
+		value: React.PropTypes.object.isRequired,     // the option object for this value
 	},
 
-	blockEvent: function(event) {
-		event.stopPropagation();
-	},
-
-	render: function() {
-		var label = this.props.label;
-
-		if (this.props.optionLabelClick) {
-			label = (
-				<a className="Select-item-label__a"
-					onMouseDown={this.blockEvent}
-					onTouchEnd={this.props.onOptionLabelClick}
-					onClick={this.props.onOptionLabelClick}>
-					{label}
-				</a>
-			);
+	handleMouseDown (event) {
+		if (event.type === 'mousedown' && event.button !== 0) {
+			return;
 		}
+		if (this.props.onClick) {
+			event.stopPropagation();
+			this.props.onClick(this.props.value, event);
+			return;
+		}
+		if (this.props.value.href) {
+			event.stopPropagation();
+		}
+	},
 
+	onRemove (event) {
+		event.preventDefault();
+		event.stopPropagation();
+		this.props.onRemove(this.props.value);
+	},
+
+	renderRemoveIcon () {
+		if (this.props.disabled || !this.props.onRemove) return;
 		return (
-			<div className="Select-item">
-				<span className="Select-item-icon"
-					onMouseDown={this.blockEvent}
-					onClick={this.props.onRemove}
-					onTouchEnd={this.props.onRemove}>&times;</span>
-				<span className="Select-item-label">{label}</span>
+			<span className="Select-value-icon"
+				onMouseDown={this.onRemove}
+				onTouchEnd={this.onRemove}>
+				&times;
+			</span>
+		);
+	},
+
+	renderLabel () {
+		let className = 'Select-value-label';
+		return this.props.onClick || this.props.value.href ? (
+			<a className={className} href={this.props.value.href} target={this.props.value.target} onMouseDown={this.handleMouseDown} onTouchEnd={this.handleMouseDown}>
+				{this.props.children}
+			</a>
+		) : (
+			<span className={className}>
+				{this.props.children}
+			</span>
+		);
+	},
+
+	render () {
+		return (
+			<div className={classNames('Select-value', this.props.value.className)}
+				style={this.props.value.style}
+				title={this.props.value.title}
+				>
+				{this.renderRemoveIcon()}
+				{this.renderLabel()}
 			</div>
 		);
 	}
 
 });
 
-module.exports = Option;
+module.exports = Value;
